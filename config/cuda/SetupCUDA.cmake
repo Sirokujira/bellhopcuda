@@ -51,7 +51,7 @@ set(CUDAFE_FLAGS "${CUDAFE_WARNINGS_POST} -Xcudafe --diag_suppress=esa_on_defaul
 string(STRIP "${CUDAFE_FLAGS}" CUDAFE_FLAGS)
 
 set(CUDA_EXTRA_FLAGS "${CUDA_EXTRA_FLAGS} ${CUDAFE_FLAGS} -ftz=true --expt-relaxed-constexpr")
-if(USE_FLOATS)
+if(BHC_USE_FLOATS)
     set(CUDA_EXTRA_FLAGS "${CUDA_EXTRA_FLAGS} -use_fast_math -prec-div=false -prec-sqrt=false")
 endif()
 string(STRIP "${CUDA_EXTRA_FLAGS}" CUDA_EXTRA_FLAGS)

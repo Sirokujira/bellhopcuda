@@ -66,7 +66,8 @@ template<bool O3D, bool R3D> void PostProcessArrivals(
                         }
                     }
                 }
-                arrinfo->MaxNPerSource[(isz * Pos->NSx + isx) * Pos->NSy + isy] = maxn;
+                arrinfo->MaxNPerSource[((size_t)isz * Pos->NSx + isx) * Pos->NSy + isy]
+                    = maxn;
             }
         }
     }
@@ -172,8 +173,8 @@ template<bool O3D> void WriteOutArrivals(
         for(int32_t isx = 0; isx < Pos->NSx; ++isx) {
             for(int32_t isy = 0; isy < Pos->NSy; ++isy) {
                 // LP: Maximum number of arrivals for this source
-                int32_t maxn
-                    = arrinfo->MaxNPerSource[(isz * Pos->NSx + isx) * Pos->NSy + isy];
+                int32_t maxn = arrinfo->MaxNPerSource
+                    [((size_t)isz * Pos->NSx + isx) * Pos->NSy + isy];
                 if(isAscii) {
                     AARRFile << maxn << '\n';
                 } else {
@@ -357,7 +358,8 @@ template<bool O3D, bool R3D> void ReadOutArrivals(
                 // LP: Maximum number of arrivals for this source
                 int32_t maxn;
                 ReadArrivalsValue(AARRFile, BARRFile, isAscii, maxn, true);
-                arrinfo->MaxNPerSource[(isz * Pos->NSx + isx) * Pos->NSy + isy] = maxn;
+                arrinfo->MaxNPerSource[((size_t)isz * Pos->NSx + isx) * Pos->NSy + isy]
+                    = maxn;
 
                 for(int32_t itheta = 0; itheta < Pos->Ntheta; ++itheta) {
                     for(int32_t iz = 0; iz < Pos->NRz_per_range; ++iz) {
@@ -372,7 +374,7 @@ template<bool O3D, bool R3D> void ReadOutArrivals(
                                 EXTWARN(
                                     "%d arrivals in file (source xyz %d,%d,%d "
                                     "/ rcvr tzr %d,%d,%d), but only memory for %d",
-                                    isx, isy, isz, itheta, iz, ir, narr, keep_narr);
+                                    narr, isx, isy, isz, itheta, iz, ir, keep_narr);
                             }
                             arrinfo->NArr[base] = keep_narr;
                             for(int32_t iArr = 0; iArr < narr; ++iArr) {
