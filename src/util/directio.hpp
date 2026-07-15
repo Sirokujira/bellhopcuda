@@ -169,11 +169,9 @@ public:
 #define DIFREADS(d, bytes) d.readstring(__FILE__, __LINE__, bytes)
     std::string readstring(const char *file, int fline, size_t bytes)
     {
-        char *s = new char[bytes];
-        read(file, fline, s, bytes);
-        std::string ret(s, bytes);
-        delete[] s;
-        return ret;
+        std::unique_ptr<char[]> s(new char[bytes]);
+        read(file, fline, s.get(), bytes);
+        return std::string(s.get(), bytes);
     }
 
 #define DIFREADV(d, data) d.read(__FILE__, __LINE__, data)
@@ -186,7 +184,7 @@ public:
     void skip(const char *file, int fline, size_t bytes)
     {
         checkAndIncrement(file, fline, bytes);
-        istr.seekg((int)bytes, istr.cur);
+        istr.seekg(static_cast<std::streamoff>(bytes), istr.cur);
     }
 
 private:
