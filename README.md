@@ -19,6 +19,27 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 
+## OpenFDTD-X ファミリでの位置づけ (処理部)
+
+このリポジトリは [OpenFDTD-X](https://github.com/Sirokujira/OpenFDTD-X) (Qt6 GUI) の
+**水中音響ドメインの処理系**として利用されます (GUI の SolverSelector /
+UnderwaterTab / OceanEnvironment の「Bellhop (Gaussian beam)」に対応)。
+
+| バイナリ | 役割 |
+|---|---|
+| `bellhopcxx` | CPU 版 (2D/Nx2D/3D 統合)。`.env` 入力 → `.shd`/`.arr`/`.ray` 出力 |
+| `bellhopcxx2d` / `bellhopcxx3d` / `bellhopcxxnx2d` | 次元特化版 |
+| `bellhopcuda` | CUDA 版 (要 NVIDIA GPU、CI 対象外) |
+| `libbellhopcxxlib` | ライブラリ組込み用 (examples/ 参照) |
+
+### CI / Release
+
+- push / PR ごとに Linux (gcc) / macOS (AppleClang) / Windows (MSVC + Ninja) で
+  CPU ビルド + DickinsB サンプルのスモーク実行 (.shd 生成 + .prt 判定)
+- artifact (`bellhopcxx-linux-x64` / `bellhopcxx-macos-arm64` /
+  `bellhopcxx-windows-x64`) 保存、`v*` タグ push で Release にバイナリ自動添付
+- 取得時の注意: glm がサブモジュールのため `git clone --recursive` が必要
+
 ## Breaking changes
 
 While we strive to maintain backward compatibility with bellhopcxx /

@@ -1,0 +1,186 @@
+# bellhopcxx / bellhopcuda (処理ロジック) CI — CPU 版のビルド + サンプルのスモーク実行。
+# CUDA はランナーに無いため BHC_ENABLE_CUDA=OFF (CPU 版 bellhopcxx のみ)。
+# glm はサブモジュールのため checkout で submodules: recursive が必要。
+# OpenFDTD-X (GUI) の水中音響ドメインから subprocess として利用される想定。
+name: CI
+
+on:
+  push:
+    branches: [ main, "claude/**" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-cpu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write   # タグ push 時の Release 添付に使用
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++
+
+      - name: Configure (CPU only)
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBHC_ENABLE_CUDA=OFF
+
+      - name: Build bellhopcxx
+        run: cmake --build build -j"$(nproc)"
+
+      - name: Smoke test — DickinsB (TL run)
+        run: |
+          mkdir -p /tmp/smoke && cp test/in/DickinsB.env test/in/DickinsB.bty /tmp/smoke/
+          cd /tmp/smoke
+          "$GITHUB_WORKSPACE/bin/bellhopcxx" DickinsB
+          test -s DickinsB.shd
+          grep -q "Dickins seamount" DickinsB.prt
+
+      - name: Upload binaries (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bellhopcxx-linux-x64
+          path: |
+            bin/bellhopcxx
+            bin/bellhopcxx2d
+            bin/bellhopcxx3d
+            bin/bellhopcxxnx2d
+            bin/libbellhopcxxlib.so
+
+      - name: Package for release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: tar czf bellhopcxx-linux-x64.tar.gz -C bin bellhopcxx bellhopcxx2d bellhopcxx3d bellhopcxxnx2d libbellhopcxxlib.so
+
+      - name: Attach binaries to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: bellhopcxx-linux-x64.tar.gz
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-logs
+          path: /tmp/smoke/*.prt
+          if-no-files-found: ignore
+
+  # macOS (Apple Silicon)。依存は C++17 + Threads のみ (OpenMP 不使用)。
+  build-macos:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure (CPU only)
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBHC_ENABLE_CUDA=OFF
+
+      - name: Build bellhopcxx
+        run: cmake --build build -j"$(sysctl -n hw.ncpu)"
+
+      - name: Smoke test — DickinsB (TL run)
+        run: |
+          mkdir -p /tmp/smoke && cp test/in/DickinsB.env test/in/DickinsB.bty /tmp/smoke/
+          cd /tmp/smoke
+          "$GITHUB_WORKSPACE/bin/bellhopcxx" DickinsB
+          test -s DickinsB.shd
+          grep -q "Dickins seamount" DickinsB.prt
+
+      - name: Upload binaries (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bellhopcxx-macos-arm64
+          path: |
+            bin/bellhopcxx
+            bin/bellhopcxx2d
+            bin/bellhopcxx3d
+            bin/bellhopcxxnx2d
+            bin/libbellhopcxxlib.dylib
+
+      - name: Package for release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: tar czf bellhopcxx-macos-arm64.tar.gz -C bin bellhopcxx bellhopcxx2d bellhopcxx3d bellhopcxxnx2d libbellhopcxxlib.dylib
+
+      - name: Attach binaries to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: bellhopcxx-macos-arm64.tar.gz
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-logs-macos
+          path: /tmp/smoke/*.prt
+          if-no-files-found: ignore
+
+  # Windows (MSVC + Ninja)。外部依存なし (glm はサブモジュール)。
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure (CPU only)
+        run: >
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          -DBHC_ENABLE_CUDA=OFF
+
+      - name: Build bellhopcxx
+        run: cmake --build build
+
+      - name: Smoke test — DickinsB (TL run)
+        run: |
+          New-Item -ItemType Directory -Force smoke | Out-Null
+          Copy-Item test/in/DickinsB.env, test/in/DickinsB.bty smoke/
+          Set-Location smoke
+          & "$env:GITHUB_WORKSPACE\bin\bellhopcxx.exe" DickinsB
+          Write-Host ("bellhopcxx exit code: 0x{0:X8}" -f $LASTEXITCODE)
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if ((Get-Item DickinsB.shd).Length -eq 0) { Write-Error "empty shd"; exit 1 }
+          if (-not (Select-String -Path DickinsB.prt -Pattern "Dickins seamount" -Quiet)) { exit 1 }
+
+      - name: Upload binaries (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bellhopcxx-windows-x64
+          path: |
+            bin/bellhopcxx.exe
+            bin/bellhopcxx2d.exe
+            bin/bellhopcxx3d.exe
+            bin/bellhopcxxnx2d.exe
+
+      - name: Package for release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: Compress-Archive -Path bin/bellhopcxx.exe, bin/bellhopcxx2d.exe, bin/bellhopcxx3d.exe, bin/bellhopcxxnx2d.exe -DestinationPath bellhopcxx-windows-x64.zip
+
+      - name: Attach binaries to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: bellhopcxx-windows-x64.zip
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-logs-windows
+          path: smoke/*.prt
+          if-no-files-found: ignore

@@ -35,3 +35,7 @@ test/individual/**/*.prt
 test/individual/**/*.ray
 test/individual/**/*.arr
 test/individual/**/*.shd
+
+# Build outputs
+/build*/
+/bin/
