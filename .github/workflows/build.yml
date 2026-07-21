@@ -1,0 +1,25 @@
+name: build
+
+on:
+  push:
+    branches: [ci/build-matrix, fix/memory-safety-and-cmake, main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Configure (C++ only, CUDA off)
+        run: cmake -S . -B build -DBHC_ENABLE_CUDA=OFF
+      - name: Build
+        run: cmake --build build --config Release -j 4
+      - name: List binaries
+        shell: bash
+        run: ls -l bin/
