@@ -30,6 +30,38 @@ set(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE} CACHE STRING "" FORCE) # Only 
 
 project(bellhoptoplevel LANGUAGES NONE)
 
+option(BHC_GIT_SUBMODULE "Check out missing git submodules (glm) during configure" ON)
+
+# glm is a git submodule. A plain "git clone" (without --recursive) leaves glm/
+# empty, and the build then fails much later with a confusing
+# "'glm/common.hpp' file not found" error from every translation unit. Detect
+# that here and either fix it automatically or explain exactly what to run.
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/glm/glm/common.hpp")
+    if(BHC_GIT_SUBMODULE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+        find_package(Git QUIET)
+        if(GIT_FOUND)
+            message(STATUS "glm submodule not checked out, running git submodule update --init --recursive")
+            execute_process(
+                COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive
+                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                RESULT_VARIABLE bhc_submodule_result
+            )
+            if(NOT bhc_submodule_result EQUAL 0)
+                message(FATAL_ERROR "git submodule update --init --recursive failed "
+                "(exit code ${bhc_submodule_result}). Please run it manually in "
+                "${CMAKE_CURRENT_SOURCE_DIR} and re-run CMake.")
+            endif()
+        endif()
+    endif()
+endif()
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/glm/glm/common.hpp")
+    message(FATAL_ERROR "The glm submodule is missing: ${CMAKE_CURRENT_SOURCE_DIR}/glm is "
+    "empty. bellhopcxx/bellhopcuda needs it for <glm/common.hpp>. Run\n"
+    "    git submodule update --init --recursive\n"
+    "in ${CMAKE_CURRENT_SOURCE_DIR}, then re-run CMake. (Clone with "
+    "\"git clone --recursive\" to get it up front.)")
+endif()
+
 option(BHC_ENABLE_CUDA "Build CUDA version in addition to C++ version" ON)
 option(CUDA_ALL_ARCHES "Build CUDA device code for all GPUs in system, not just newest one" OFF)
 
