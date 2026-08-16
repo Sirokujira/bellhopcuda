@@ -77,7 +77,7 @@ public:
         trackdeallocate(params, arrinfo->NArr);
         trackdeallocate(params, arrinfo->MaxNPerSource);
         arrinfo->AllowMerging = GetInternal(params)->numThreads == 1;
-        size_t nSrcs          = params.Pos->NSx * params.Pos->NSy * params.Pos->NSz;
+        size_t nSrcs = (size_t)params.Pos->NSx * params.Pos->NSy * params.Pos->NSz;
         size_t nSrcsRcvrs     = nSrcs * params.Pos->Ntheta * params.Pos->NRr
             * params.Pos->NRz_per_range;
         int64_t remainingMemory = GetInternal(params)->maxMemory

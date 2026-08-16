@@ -480,6 +480,7 @@ template<bool O3D, bool R3D> HOST_DEVICE inline bool SingleSSP(
     SSPSegState iSeg;
     iSeg.r = iSeg.x = iSeg.y = iSeg.z = 0;
     ErrState errState;
+    ResetErrState(&errState);
     sound_speed = -1.0f;
 
     if(st == 'N') {
@@ -508,7 +509,7 @@ template<bool O3D, bool R3D> HOST_DEVICE inline bool SingleSSP(
         return false;
     }
 
-    sound_speed = sspo.ccpx.real();
+    sound_speed = static_cast<float>(sspo.ccpx.real());
     return true;
 }
 

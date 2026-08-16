@@ -391,7 +391,7 @@ template<bool O3D, bool R3D> bool run(
         module::ModulesList<O3D> modules;
         for(auto *m : modules.list()) m->Validate(params);
         for(auto *m : modules.list()) m->Preprocess(params);
-        auto *mo = GetMode<O3D, R3D>(params);
+        std::unique_ptr<mode::ModeModule<O3D, R3D>> mo(GetMode<O3D, R3D>(params));
         mo->Preprocess(params, outputs);
         sw.tock("Preprocess");
 
@@ -407,8 +407,6 @@ template<bool O3D, bool R3D> bool run(
             }
             sw.tock("Postprocess");
         }
-
-        delete mo;
     } catch(const std::exception &e) {
         EXTWARN("Exception caught in bhc::run(): %s\n", e.what());
         return false;
@@ -434,13 +432,11 @@ template<bool O3D, bool R3D> bool postprocess(
     bhcParams<O3D> &params, bhcOutputs<O3D, R3D> &outputs)
 {
     try {
-        auto *mo = GetMode<O3D, R3D>(params);
+        std::unique_ptr<mode::ModeModule<O3D, R3D>> mo(GetMode<O3D, R3D>(params));
         mo->Postprocess(params, outputs);
         if(IsAlsoEigenraysRun(params.Beam)) {
             mode::PostProcessEigenrays(params, outputs);
         }
-        delete mo;
-
     } catch(const std::exception &e) {
         EXTWARN("Exception caught in bhc::postprocess(): %s\n", e.what());
         return false;
@@ -470,14 +466,13 @@ template<bool O3D, bool R3D> bool writeout(
         Stopwatch sw(GetInternal(params));
         sw.tick();
         if(FileRoot != nullptr) { GetInternal(params)->FileRoot = FileRoot; }
-        auto *mo = GetMode<O3D, R3D>(params);
+        std::unique_ptr<mode::ModeModule<O3D, R3D>> mo(GetMode<O3D, R3D>(params));
         mo->Writeout(params, outputs);
         if(IsAlsoEigenraysRun(params.Beam)) {
             mode::Eigen<O3D, R3D> E1;
             E1.Writeout(params, outputs);
         }
         sw.tock("writeout");
-        delete mo;
     } catch(const std::exception &e) {
         EXTWARN("Exception caught in bhc::writeout(): %s\n", e.what());
         return false;
@@ -506,9 +501,8 @@ template<bool O3D, bool R3D> bool readout(
 {
     try {
         if(FileRoot == nullptr) { FileRoot = GetInternal(params)->FileRoot.c_str(); }
-        auto *mo = GetMode<O3D, R3D>(params);
+        std::unique_ptr<mode::ModeModule<O3D, R3D>> mo(GetMode<O3D, R3D>(params));
         mo->Readout(params, outputs, FileRoot);
-        delete mo;
         module::ModulesList<O3D> modules;
         for(auto *m : modules.list()) m->Validate(params);
     } catch(const std::exception &e) {

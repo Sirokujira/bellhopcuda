@@ -36,6 +36,10 @@ test/individual/**/*.ray
 test/individual/**/*.arr
 test/individual/**/*.shd
 
+# Build outputs
+/build*/
+/bin/
+
 # Claude Code: keep settings.json, rules/, commands/ in git; ignore local state
 .claude/settings.local.json
 .claude/launch.json
