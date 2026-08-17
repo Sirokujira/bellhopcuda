@@ -39,3 +39,12 @@ test/individual/**/*.shd
 # Build outputs
 /build*/
 /bin/
+
+# Claude Code: keep settings.json, rules/, commands/ in git; ignore local state
+.claude/settings.local.json
+.claude/launch.json
+.claude/worktrees/
+
+# Local scratch runs
+sample.*
+test/dbg/

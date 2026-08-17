@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(cmake:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git ls-remote:*)",
+      "Bash(./run_tests.sh:*)",
+      "Bash(./run_all_gen.sh:*)",
+      "Bash(python3 gen_tests.py:*)",
+      "Bash(python3 compare_ray_2.py:*)",
+      "Bash(python3 compare_shdfil.py:*)",
+      "Bash(python3 compare_arrivals.py:*)",
+      "Bash(python3 compare_floats.py:*)",
+      "Bash(clang-format:*)",
+      "WebFetch(domain:github.com)"
+    ],
+    "deny": []
+  }
+}
