@@ -1,9 +1,11 @@
 # Compilation of bellhopcxx / bellhopcuda
 
 We use a CMake-based build system. The following instructions assume you have
-[CMake >=3.27 installed](https://cmake.org/install/) and available in your system PATH.
-Build compiles and runs on Linux and Windows, and we recommend the most recent compilers with
-C++17 support.
+[CMake installed](https://cmake.org/install/) and available in your system PATH:
+**3.15 or newer for the CPU-only build**, and **3.24 or newer to build with CUDA**
+(the CUDA configuration uses `CUDA_ARCHITECTURES native`, added in CMake 3.24).
+Build compiles and runs on Linux, macOS, and Windows, and we recommend the most recent
+compilers with C++17 support.
 
 ### Building bellhopcxx (CPU only)
 To build the CPU-only version, `bellhopcxx`, follow these steps:

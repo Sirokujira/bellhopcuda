@@ -48,8 +48,9 @@ Most notably, the binarry output data files, **.shd and .arr**, have been update
 to match the current behavior of [`BELLHOP` / `BELLHOP3D`](http://oalib.hlsresearch.com/AcousticsToolbox/)
 2024 update to the Acoustics Toolbox.
 
-CMake has also been updated to version 3.27 minimum to support automated recognition
-of CUDA enabled systems. You may need to update your CMake installation.
+Building with CUDA now requires CMake 3.24 or newer, for the automated recognition of
+CUDA enabled systems (`CUDA_ARCHITECTURES native`). The CPU-only build still works with
+CMake 3.15 or newer. You may need to update your CMake installation.
 
 ## Updated Features
 

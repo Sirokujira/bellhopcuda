@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see <https://www.gnu.org/licenses/>.
 
+# 3.24 rather than the top level's 3.15: SetupCUDA.cmake sets CUDA_ARCHITECTURES
+# to "native", which CMake only understands from 3.24 on. The CPU-only build in
+# config/cxx stays buildable with 3.15.
+cmake_minimum_required(VERSION 3.24)
 project(bellhopcuda LANGUAGES CXX CUDA)
 
 include(../SetupCommon.cmake)
