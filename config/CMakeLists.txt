@@ -23,15 +23,41 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/.git/hooks/pre-commit")
 else()
     file(MD5 "${PROJECT_SOURCE_DIR}/.git/hooks/pre-commit" precommit_md5)
     file(MD5 "${PROJECT_SOURCE_DIR}/clang-format.hook" curhook_md5)
-    if(NOT precommit_md5 EQUAL curhook_md5)
+    # STREQUAL, not EQUAL: EQUAL is a numeric comparison, and MD5 hashes are hex
+    # strings. It misfires both ways -- two identical hashes beginning with a hex
+    # letter compare as different (warn and rewrite on every configure), while two
+    # different hashes sharing a numeric prefix compare as equal (stale hook kept).
+    if(NOT precommit_md5 STREQUAL curhook_md5)
         message(WARNING "clang-format pre-commit hook is outdated or a different "
         "pre-commit hook was installed, overwriting with current clang-format hook")
         set(copy_hook 1)
     endif()
 endif()
+# A hook installed before the permissions fix below has a matching MD5 but no
+# executable bit, so the check above leaves it in place and git keeps ignoring
+# it. Test the bit separately to repair those clones. UNIX only: Windows has no
+# executable bit and git there runs hooks regardless.
+if(NOT copy_hook AND UNIX)
+    execute_process(
+        COMMAND test -x "${PROJECT_SOURCE_DIR}/.git/hooks/pre-commit"
+        RESULT_VARIABLE hook_exec_test
+    )
+    if(NOT hook_exec_test EQUAL 0)
+        message(WARNING "clang-format pre-commit hook is not executable, so git "
+        "ignores it; reinstalling with the executable bit set")
+        set(copy_hook 1)
+    endif()
+endif()
 if(copy_hook)
+    # Git silently ignores a hook that is not executable, so set the bit here
+    # rather than relying on the mode file(COPY) carries over from the source.
+    # FILE_PERMISSIONS keeps this working on CMake 3.15 (file(CHMOD) needs 3.19).
     file(COPY "${PROJECT_SOURCE_DIR}/clang-format.hook"
         DESTINATION "${PROJECT_SOURCE_DIR}/.git/hooks"
+        FILE_PERMISSIONS
+            OWNER_READ OWNER_WRITE OWNER_EXECUTE
+            GROUP_READ GROUP_EXECUTE
+            WORLD_READ WORLD_EXECUTE
     )
     file(RENAME "${PROJECT_SOURCE_DIR}/.git/hooks/clang-format.hook"
         "${PROJECT_SOURCE_DIR}/.git/hooks/pre-commit"
