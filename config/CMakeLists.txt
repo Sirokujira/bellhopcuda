@@ -71,5 +71,16 @@ if(BHC_ENABLE_CUDA AND NOT(APPLE OR DEFINED ENV{BHC_NO_CUDA}))
 endif()
 
 if(BHC_BUILD_EXAMPLES)
-    add_subdirectory(examples)
+    # Between them the examples run all three dimensionalities (readout and
+    # writeenv dispatch on --2D/--Nx2D/--3D), linking against the library's
+    # explicit instantiations for each. With any dimension disabled those are
+    # missing, so everything else builds and then the examples fail to link with
+    # "undefined reference to bhc::setup<true, true>". Skip them instead.
+    if(BHC_DIM_ENABLE_2D AND BHC_DIM_ENABLE_3D AND BHC_DIM_ENABLE_NX2D)
+        add_subdirectory(examples)
+    else()
+        message(WARNING "Skipping the example programs: they need BHC_DIM_ENABLE_2D, "
+        "BHC_DIM_ENABLE_3D and BHC_DIM_ENABLE_NX2D all ON. The library and "
+        "executables still build. Pass -DBHC_BUILD_EXAMPLES=OFF to silence this.")
+    endif()
 endif()
